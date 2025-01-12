@@ -85,6 +85,7 @@ class AuthController {
                     secure: process.env.NODE_ENV == 'production',
                     sameSite: 'none',
                     maxAge: 7 * 24 * 60 * 60 * 1000,
+                    domain:'imagebook-backend.onrender.com'
                 })
                 res.status(200).json({ success: true, userData: user })
                 return
