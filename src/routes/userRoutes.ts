@@ -17,6 +17,6 @@ userRoute.post('/images', userProtect, imageController.createImage)
 userRoute.get('/images', userProtect, imageController.findImagesByUserId)
 userRoute.put('/images/:id', userProtect, imageController.updateImage)
 userRoute.delete('/images/:id', userProtect, imageController.deleteImage)
-userRoute.put('/images/order', userProtect, imageController.updateImageOrder)
+userRoute.patch('/images/order', userProtect, imageController.updateImageOrder)
 
 export default userRoute

@@ -1,6 +1,12 @@
 import { Request, Response } from 'express';
-import Image from '../models/imageModel'
+import Image, { IImage } from '../models/imageModel'
 import { CustomRequest } from '../middlewares/auth';
+
+
+export type ImageOrderUpdate = {
+    _id: string;
+    order: number;
+}
 
 class ImageController {
 
@@ -8,7 +14,7 @@ class ImageController {
         try {
             const { title, imagePath, order } = req.body;
 
-            const newImage = new Image({ userId:req.user?._id, title, imagePath, order });
+            const newImage = new Image({ userId: req.user?._id, title, imagePath, order });
             await newImage.save();
 
             res.status(201).json({ message: 'Image created successfully', image: newImage });
@@ -19,37 +25,43 @@ class ImageController {
 
     async findImagesByUserId(req: CustomRequest, res: Response): Promise<void> {
         try {
-            const images = await Image.find({userId:req?.user?._id}).sort({ order: 1 });
+            const images = await Image.find({ userId: req?.user?._id }).sort({ order: 1 });
             res.status(200).json(images);
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch images' });
         }
     }
 
-    
+
     async updateImage(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
             const { title, imagePath } = req.body;
-
-            const updatedImage = await Image.findByIdAndUpdate(
-                id,
-                { title, imagePath },
-                { new: true }
-            );
-
+            let updatedImage
+            if (imagePath) {
+                updatedImage = await Image.findByIdAndUpdate(
+                    id,
+                    { title, imagePath },
+                    { new: true }
+                )
+            } else {
+                updatedImage = await Image.findByIdAndUpdate(
+                    id,
+                    { title },
+                    { new: true }
+                )
+            }
             if (!updatedImage) {
-                res.status(404).json({ error: 'Image not found' });
+                res.status(404).json({ error: 'Image data not found' })
                 return;
             }
-
-            res.status(200).json({ message: 'Image updated successfully', image: updatedImage });
+            res.status(200).json({ message: 'Image updated successfully', image: updatedImage })
         } catch (error) {
-            res.status(500).json({ error: 'Failed to update image' });
+            res.status(500).json({ error: 'Failed to update image' })
         }
     }
 
-    
+
     async deleteImage(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
@@ -67,18 +79,27 @@ class ImageController {
         }
     }
 
-    
+
     async updateImageOrder(req: Request, res: Response): Promise<void> {
         try {
-            const { imageOrder } = req.body; 
+            const { images }: { images: ImageOrderUpdate[] } = req.body
 
-           
+            const bulkOps = images.map((image) => ({
+                updateOne: {
+                    filter: { _id: image._id },
+                    update: { order: image.order },
+                },
+            }))
 
-            res.status(200).json({ message: 'Image order updated successfully' });
+            await Image.bulkWrite(bulkOps)
+
+            res.status(200).json({ success: true, message: 'Updated successfully' })
+
         } catch (error) {
-            res.status(500).json({ error: 'Failed to update image order' });
+            console.error('Error: ', error);
+            res.status(500).json({ error: 'Failed to update image order!!' })
         }
     }
 }
 
-export default new ImageController;
+export default new ImageController
