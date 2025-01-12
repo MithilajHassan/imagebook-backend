@@ -83,7 +83,7 @@ class AuthController {
                 res.cookie('jwt', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV == 'production',
-                    // sameSite: 'none',
+                    sameSite: 'none',
                     maxAge: 7 * 24 * 60 * 60 * 1000,
                 })
                 res.status(200).json({ success: true, userData: user })
@@ -140,7 +140,7 @@ class AuthController {
             res.cookie('jwt', '', {
                 httpOnly: true,
                 secure: process.env.NODE_ENV == 'production',
-                // sameSite: 'none',
+                sameSite: 'none',
                 expires: new Date(0),
             })
 
