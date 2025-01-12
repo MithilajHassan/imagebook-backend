@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authController_1 = __importDefault(require("../controllers/authController"));
+const imageController_1 = __importDefault(require("../controllers/imageController"));
+const auth_1 = require("../middlewares/auth");
+const userRoute = (0, express_1.Router)();
+userRoute.post('/signin', authController_1.default.userSignin);
+userRoute.post('/signup', authController_1.default.userSignup);
+userRoute.post('/verifyuser', authController_1.default.userVerify);
+userRoute.post('/resendotp', authController_1.default.resendOtp);
+userRoute.post('/signout', authController_1.default.signout);
+userRoute.post('/changepassword', authController_1.default.changePassword);
+userRoute.post('/images', auth_1.userProtect, imageController_1.default.createImage);
+userRoute.get('/images', auth_1.userProtect, imageController_1.default.findImagesByUserId);
+userRoute.put('/images/:id', auth_1.userProtect, imageController_1.default.updateImage);
+userRoute.delete('/images/:id', auth_1.userProtect, imageController_1.default.deleteImage);
+userRoute.patch('/images/order', auth_1.userProtect, imageController_1.default.updateImageOrder);
+exports.default = userRoute;
