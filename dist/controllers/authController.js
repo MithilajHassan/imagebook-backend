@@ -93,13 +93,7 @@ class AuthController {
                 }
                 if ((yield (0, bcrypt_1.compare)(password, user.password)) && user.isVerified) {
                     const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.TOKEN_SECRET, { expiresIn: '7d' });
-                    res.cookie('jwt', token, {
-                        httpOnly: true,
-                        secure: process.env.NODE_ENV == 'production',
-                        // sameSite: 'none',
-                        maxAge: 7 * 24 * 60 * 60 * 1000,
-                    });
-                    res.status(200).json({ success: true, userData: user });
+                    res.status(200).json({ success: true, token });
                     return;
                 }
                 else {
@@ -144,22 +138,6 @@ class AuthController {
                     text: `Your OTP is: ${otp}`
                 });
                 res.status(200).json({ success: true, message: 'OTP sent to your email' });
-            }
-            catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
-            }
-        });
-    }
-    signout(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                res.cookie('jwt', '', {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV == 'production',
-                    // sameSite: 'none',
-                    expires: new Date(0),
-                });
-                res.status(200).json({ message: "You are signed out", success: true });
             }
             catch (err) {
                 res.status(500).json({ message: 'Internal server error !' });

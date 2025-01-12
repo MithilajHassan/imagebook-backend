@@ -12,7 +12,6 @@ userRoute.post('/signin', authController_1.default.userSignin);
 userRoute.post('/signup', authController_1.default.userSignup);
 userRoute.post('/verifyuser', authController_1.default.userVerify);
 userRoute.post('/resendotp', authController_1.default.resendOtp);
-userRoute.post('/signout', authController_1.default.signout);
 userRoute.post('/changepassword', authController_1.default.changePassword);
 userRoute.post('/images', auth_1.userProtect, imageController_1.default.createImage);
 userRoute.get('/images', auth_1.userProtect, imageController_1.default.findImagesByUserId);

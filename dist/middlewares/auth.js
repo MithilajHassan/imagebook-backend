@@ -16,10 +16,10 @@ exports.userProtect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = __importDefault(require("../models/userModel"));
 const userProtect = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    let token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.jwt;
-    if (token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
         try {
+            const token = authHeader.split(" ")[1];
             const decoded = jsonwebtoken_1.default.verify(token, process.env.TOKEN_SECRET);
             const user = yield userModel_1.default.findById(decoded.userId);
             if (!user) {
