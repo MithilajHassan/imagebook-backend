@@ -80,14 +80,7 @@ class AuthController {
             }
             if (await compare(password, user.password) && user.isVerified) {
                 const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET!, { expiresIn: '7d' })
-                res.cookie('jwt', token, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV == 'production',
-                    sameSite: 'none',
-                    maxAge: 7 * 24 * 60 * 60 * 1000,
-                    domain:'imagebook-backend.onrender.com'
-                })
-                res.status(200).json({ success: true, userData: user })
+                res.status(200).json({ success: true, token })
                 return
             } else {
                 res.status(401).json({ message: "Wrong password" })
@@ -131,21 +124,6 @@ class AuthController {
             })
 
             res.status(200).json({ success: true, message: 'OTP sent to your email' })
-        } catch (err) {
-            res.status(500).json({ message: 'Internal server error !' })
-        }
-    }
-
-    async signout(req: Request, res: Response) {
-        try {
-            res.cookie('jwt', '', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV == 'production',
-                sameSite: 'none',
-                expires: new Date(0),
-            })
-
-            res.status(200).json({ message: "You are signed out", success: true })
         } catch (err) {
             res.status(500).json({ message: 'Internal server error !' })
         }

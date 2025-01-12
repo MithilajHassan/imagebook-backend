@@ -10,19 +10,20 @@ export interface JwtPayload {
 }
 
 export const userProtect = async (req: CustomRequest, res: Response, next: NextFunction) => {
-    let token = req.cookies?.jwt
-    if (token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
         try {
-            const decoded = jwt.verify(token,process.env.TOKEN_SECRET!) as JwtPayload
+            const token = authHeader.split(" ")[1]
+            const decoded = jwt.verify(token, process.env.TOKEN_SECRET!) as JwtPayload
             const user = await User.findById(decoded.userId)
             if (!user) {
                 res.status(401).json({ message: 'Not authorized, invalid token' })
-                return 
-            } 
+                return
+            }
             req.user = user
             next()
         } catch (error) {
-            res.status(401).json({ message: 'Not authorized, invalid token' });
+            res.status(401).json({ message: 'Not authorized, invalid token' })
         }
     } else {
         res.status(401).json({ message: 'Not authorized, no token' })

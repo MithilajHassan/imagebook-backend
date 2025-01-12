@@ -10,7 +10,6 @@ userRoute.post('/signin', authController.userSignin)
 userRoute.post('/signup', authController.userSignup)
 userRoute.post('/verifyuser', authController.userVerify)
 userRoute.post('/resendotp', authController.resendOtp)
-userRoute.post('/signout', authController.signout)
 userRoute.post('/changepassword', authController.changePassword)
 
 userRoute.post('/images', userProtect, imageController.createImage)

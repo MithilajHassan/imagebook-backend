@@ -2,7 +2,6 @@ import express from 'express'
 import dotenv from 'dotenv'
 import connectDB from './config/db'
 import userRoute from './routes/userRoutes'
-import cookieParser from 'cookie-parser'
 import cors from 'cors'
 
 dotenv.config()
@@ -17,8 +16,6 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
-
 
 
 app.use('/api', userRoute)
