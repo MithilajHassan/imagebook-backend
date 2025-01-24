@@ -12,53 +12,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const userModel_1 = __importDefault(require("../models/userModel"));
-const bcrypt_1 = require("bcrypt");
+const authServices_1 = __importDefault(require("../services/authServices"));
+const otpRepository_1 = __importDefault(require("../repositories/otpRepository"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const otpModel_1 = __importDefault(require("../models/otpModel"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const userRepository_1 = __importDefault(require("../repositories/userRepository"));
 class AuthController {
     userSignup(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { name, email, phone, password } = req.body;
-                if (yield userModel_1.default.findOne({ email })) {
-                    res.status(409).json({ message: 'Email already exist' });
+                const signupResult = yield authServices_1.default.signupUser({ name, email, phone, password });
+                if (!signupResult.success) {
+                    res.status(signupResult.status).json({ message: signupResult.message });
                     return;
                 }
-                const user = new userModel_1.default({
-                    name,
-                    email,
-                    phone,
-                    password
-                });
-                yield user.save();
                 const otp = Math.floor(1000 + Math.random() * 9000);
-                const otpData = new otpModel_1.default({
-                    email: email,
-                    otp: otp,
-                });
-                yield otpData.save();
+                yield otpRepository_1.default.saveOtp(email, otp);
                 const transporter = nodemailer_1.default.createTransport({
-                    host: "smtp.gmail.com",
-                    port: 587,
                     service: "Gmail",
-                    secure: true,
                     auth: {
                         user: process.env.USER_EMAIL,
-                        pass: process.env.USER_EMAIL_PASSWORD
+                        pass: process.env.USER_EMAIL_PASSWORD,
                     },
                 });
-                transporter.sendMail({
+                yield transporter.sendMail({
                     to: email,
                     from: process.env.USER_EMAIL,
                     subject: "Imagebook OTP Verification",
-                    text: `Your OTP is: ${otp}`
+                    text: `Your OTP is: ${otp}`,
                 });
-                res.status(200).json({ success: true, message: 'OTP sent to your email' });
+                res.status(200).json({ success: true, message: "OTP sent to your email" });
             }
             catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
+                res.status(500).json({ message: "Internal server error" });
             }
         });
     }
@@ -66,19 +52,17 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, otp } = req.body;
-                const savedOtp = yield otpModel_1.default.findOne({ email });
-                if ((savedOtp === null || savedOtp === void 0 ? void 0 : savedOtp.otp) == otp) {
-                    yield userModel_1.default.findOneAndUpdate({ email }, { isVerified: true });
-                    res.status(200).json({ success: true });
-                    return;
+                const savedOtp = yield otpRepository_1.default.findOtpByEmail(email);
+                if ((savedOtp === null || savedOtp === void 0 ? void 0 : savedOtp.otp) === parseInt(otp)) {
+                    yield authServices_1.default.verifyUser(email);
+                    res.status(200).json({ success: true, message: "User verified successfully" });
                 }
                 else {
                     res.status(401).json({ message: "Incorrect OTP" });
-                    return;
                 }
             }
             catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
+                res.status(500).json({ message: "Internal server error" });
             }
         });
     }
@@ -86,23 +70,16 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, password } = req.body;
-                const user = yield userModel_1.default.findOne({ email });
-                if (!user) {
-                    res.status(404).json({ message: "User not found." });
+                const signinResult = yield authServices_1.default.signinUser(email, password);
+                if (!signinResult.success) {
+                    res.status(signinResult.status).json({ message: signinResult.message });
                     return;
                 }
-                if ((yield (0, bcrypt_1.compare)(password, user.password)) && user.isVerified) {
-                    const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.TOKEN_SECRET, { expiresIn: '7d' });
-                    res.status(200).json({ success: true, token });
-                    return;
-                }
-                else {
-                    res.status(401).json({ message: "Wrong password" });
-                    return;
-                }
+                res.status(200).json({ success: true, token: signinResult.token });
             }
             catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
+                console.error(err);
+                res.status(500).json({ message: "Internal server error" });
             }
         });
     }
@@ -110,37 +87,31 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email } = req.body;
-                const user = yield userModel_1.default.findOne({ email });
+                const user = yield userRepository_1.default.findUserByEmail(email);
                 if (!user) {
                     res.status(404).json({ message: "User not found" });
                     return;
                 }
                 const otp = Math.floor(1000 + Math.random() * 9000);
-                const otpData = new otpModel_1.default({
-                    email: email,
-                    otp: otp,
-                });
-                yield otpData.save();
+                yield otpRepository_1.default.saveOtp(email, otp);
                 const transporter = nodemailer_1.default.createTransport({
-                    host: "smtp.gmail.com",
-                    port: 587,
                     service: "Gmail",
-                    secure: true,
                     auth: {
                         user: process.env.USER_EMAIL,
-                        pass: process.env.USER_EMAIL_PASSWORD
+                        pass: process.env.USER_EMAIL_PASSWORD,
                     },
                 });
-                transporter.sendMail({
+                yield transporter.sendMail({
                     to: email,
                     from: process.env.USER_EMAIL,
                     subject: "Imagebook OTP Verification",
-                    text: `Your OTP is: ${otp}`
+                    text: `Your OTP is: ${otp}`,
                 });
-                res.status(200).json({ success: true, message: 'OTP sent to your email' });
+                res.status(200).json({ success: true, message: "OTP sent to your email" });
             }
             catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
+                console.error(err);
+                res.status(500).json({ message: "Internal server error" });
             }
         });
     }
@@ -148,17 +119,16 @@ class AuthController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { email, newPassword } = req.body;
-                const user = yield userModel_1.default.findOne({ email });
-                if (!user) {
-                    res.status(404).json({ success: false, message: "User not found." });
+                const changePasswordResult = yield authServices_1.default.changePassword(email, newPassword);
+                if (!changePasswordResult.success) {
+                    res.status(changePasswordResult.status).json({ message: changePasswordResult.message });
                     return;
                 }
-                user.password = newPassword;
-                yield user.save();
-                res.status(200).json({ success: true, message: "Password updated successfully." });
+                res.status(200).json({ success: true, message: "Password updated successfully" });
             }
             catch (err) {
-                res.status(500).json({ message: 'Internal server error !' });
+                console.error(err);
+                res.status(500).json({ message: "Internal server error" });
             }
         });
     }
