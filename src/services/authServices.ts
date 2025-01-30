@@ -1,5 +1,5 @@
 import userRepository from "../repositories/userRepository";
-import { compare } from "bcrypt";
+import { compare, genSalt, hash } from "bcrypt";
 import jwt from "jsonwebtoken";
 
 class UserService {
@@ -34,7 +34,9 @@ class UserService {
         if (!user) {
             return { success: false, status: 404, message: "User not found." }
         }
-        await userRepository.updatePassword(email, newPassword)
+        const salt = await genSalt(10)
+        const hashedPassword = await hash(newPassword, salt)
+        await userRepository.updatePassword(email, hashedPassword)
         return { success: true }
     }
 }
